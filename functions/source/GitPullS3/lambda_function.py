@@ -160,10 +160,7 @@ def lambda_handler(event, context):
         logger.error('Source IP %s is not allowed' % event['context']['source-ip'])
         raise Exception('Source IP %s is not allowed' % event['context']['source-ip'])
 
-    if 'X-GitHub-Event' in event['params']['header'].keys():
-        if event['params']['header']['X-GitHub-Event'] == 'pull_request':
-            repo_name = full_name + '/pr'
-    elif ('action' in event['body-json'] and event['body-json']['action'] == 'published'):
+    if ('action' in event['body-json'] and event['body-json']['action'] == 'published'):
         branch_name = 'tags/%s' % event['body-json']['release']['tag_name']
         repo_name = full_name + '/release'
     else:
@@ -171,8 +168,14 @@ def lambda_handler(event, context):
             branch_name = 'master'
             repo_name = event['body-json']['project']['path_with_namespace']
         except:
-            branch_name = event['body-json']['ref'].replace('refs/heads/', '')
-            repo_name = full_name + '/branch/' + branch_name
+            if 'X-GitHub-Event' in event['params']['header'].keys():
+                if event['params']['header']['X-GitHub-Event'] == 'pull_request':
+                    repo_name = full_name + '/pr'
+                    branch_name = event['body-json']['ref'].replace('refs/heads/', '')
+            else:
+                branch_name = event['body-json']['ref'].replace('refs/heads/', '')
+                repo_name = full_name + '/branch/' + branch_name
+
     try:
         remote_url = event['body-json']['project']['git_ssh_url']
     except Exception:
