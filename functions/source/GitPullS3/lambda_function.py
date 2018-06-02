@@ -160,7 +160,9 @@ def lambda_handler(event, context):
         logger.error('Source IP %s is not allowed' % event['context']['source-ip'])
         raise Exception('Source IP %s is not allowed' % event['context']['source-ip'])
 
-    if('action' in event['body-json'] and event['body-json']['action'] == 'published'):
+    if ('X-GitHub-Event' in event['params']['header'].keys() and event['params']['header']['X-Github-Event'] == 'pull_request'):
+        repo_name = full_name + '/pr'
+    elif ('action' in event['body-json'] and event['body-json']['action'] == 'published'):
         branch_name = 'tags/%s' % event['body-json']['release']['tag_name']
         repo_name = full_name + '/release'
     else:
